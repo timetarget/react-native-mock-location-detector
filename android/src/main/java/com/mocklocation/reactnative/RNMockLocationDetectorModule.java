@@ -7,6 +7,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.Promise;
 
 //for callback
 import com.facebook.react.bridge.Callback;
@@ -51,11 +52,10 @@ public class RNMockLocationDetectorModule extends ReactContextBaseJavaModule {
     return "RNMockLocationDetector";
   }
 
-  
+
   /** Java code for checkLocationProvide */
   @ReactMethod
-  public void checkMockLocationProvider(final String dialogTitle, final String dialogMessage,
-      final String dialogButtonText) {
+  public void checkMockLocationProvider(final Promise promise) {
     if (ActivityCompat.checkSelfPermission(getCurrentActivity(),
         Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
         && ActivityCompat.checkSelfPermission(getCurrentActivity(),
@@ -70,20 +70,9 @@ public class RNMockLocationDetectorModule extends ReactContextBaseJavaModule {
           public void onSuccess(Location location) {
             // Got last known location. In some rare situations this can be null.
             if (location != null) {
-              // Logic to handle location object
-              if (isLocationFromMockProvider(getCurrentActivity(), location)) {
-                final AlertDialog.Builder builder = new AlertDialog.Builder(getCurrentActivity());
-                builder.setTitle(dialogTitle);
-                builder.setMessage(dialogMessage);
-                builder.setCancelable(false);
-                builder.setPositiveButton(dialogButtonText, new DialogInterface.OnClickListener() {
-                  public void onClick(DialogInterface dialog, int which) {
-                    getCurrentActivity().finish();
-                  }
-                });
-                builder.show();
-
-              } 
+              promise.resolve(isLocationFromMockProvider(getCurrentActivity(), location));
+            } else {
+              promise.resolve(false);
             }
           }
 
@@ -91,16 +80,14 @@ public class RNMockLocationDetectorModule extends ReactContextBaseJavaModule {
   }
 
   public boolean isLocationFromMockProvider(Context context, Location location) {
-    boolean isMock = false;
     if (android.os.Build.VERSION.SDK_INT >= 18) {
-      isMock = location.isFromMockProvider();
-    } else {
-      if (Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ALLOW_MOCK_LOCATION).equals("0"))
-        return false;
-      else {
-        return true;
-      }
+      return location.isFromMockProvider();
     }
-    return isMock;
+
+    if (Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ALLOW_MOCK_LOCATION).equals("0")) {
+      return false;
+    }
+
+    return false;
   }
 }
