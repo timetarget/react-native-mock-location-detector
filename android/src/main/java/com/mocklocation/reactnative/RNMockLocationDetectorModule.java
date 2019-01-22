@@ -84,10 +84,6 @@ public class RNMockLocationDetectorModule extends ReactContextBaseJavaModule {
       return location.isFromMockProvider();
     }
 
-    if (Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ALLOW_MOCK_LOCATION).equals("0")) {
-      return false;
-    }
-
-    return false;
+    return !Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ALLOW_MOCK_LOCATION).equals("0");
   }
 }
